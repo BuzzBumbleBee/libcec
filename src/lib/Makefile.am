@@ -60,4 +60,11 @@ libcec_la_SOURCES += adapter/TDA995x/TDA995xCECAdapterDetection.cpp \
 endif
 
 
+## Tegra support
+if USE_TEGRA_API
+libcec_la_SOURCES += adapter/Tegra/TegraCECAdapterDetection.cpp \
+                     adapter/Tegra/TegraCECAdapterCommunication.cpp
+endif
+
+
 libcec_la_LDFLAGS = @LIBS_LIBCEC@ -version-info @VERSION@

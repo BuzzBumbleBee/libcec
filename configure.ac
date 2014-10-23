@@ -43,6 +43,13 @@ AC_ARG_ENABLE([optimisation],
   [use_optimisation=$enableval],
   [use_optimisation=yes])
 
+## Tegra support
+AC_ARG_ENABLE([tegra],
+  [AS_HELP_STRING([--enable-tegra],
+  [enable support for the Tegra (default is no)])],
+  [use_tegra=$enableval],
+  [use_tegra=no])
+
 ## TDA995x support
 AC_ARG_ENABLE([cubox],
   [AS_HELP_STRING([--enable-tda995x],
@@ -269,6 +276,11 @@ else
   AM_CONDITIONAL(USE_TDA995X_API, false)
   features="$features\n  TDA995x support :\t\t\tno"
 fi
+
+AC_DEFINE([HAVE_TEGRA_API],[1],[Define to 1 to include CuBox support])
+AM_CONDITIONAL(USE_TEGRA_API, true)
+features="$features\n  Tegra support :\t\t\tyes"
+LIB_INFO="$LIB_INFO 'Tegra'"
 
 ## check if our build system is complete
 AC_CHECK_HEADER(algorithm,,AC_MSG_ERROR($msg_required_header_missing))
