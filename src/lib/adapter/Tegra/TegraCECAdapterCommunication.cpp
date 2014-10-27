@@ -137,7 +137,7 @@ cec_adapter_message_state TegraCECAdapterCommunication::Write(
     size++;
 
     if (size > TEGRA_CEC_FRAME_MAX_LENGTH){
-      return ADAPTER_MESSAGE_STATE_SENT_NOT_ACKED;
+      return ADAPTER_MESSAGE_STATE_ERROR;
     }
   }
 
