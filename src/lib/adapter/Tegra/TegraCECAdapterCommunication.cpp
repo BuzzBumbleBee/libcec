@@ -215,7 +215,10 @@ void *TegraCECAdapterCommunication::Process(void)
     unsigned char buffer[2] = {0,0};
     cec_command cmd;
 
-    int rc = read(fd,buffer,2);
+    if (read(fd,buffer,2) < 0){
+        LIB_CEC->AddLog(CEC_LOG_ERROR, "%s: Failed To Read From Tegra CEC Device", __func__);
+    }
+
     initiator = cec_logical_address(buffer[0] >> 4);
     destination = cec_logical_address(buffer[0] & 0x0f);
 
@@ -224,7 +227,11 @@ void *TegraCECAdapterCommunication::Process(void)
     }
 
     if (isNotEndOfData > 0){
-     rc = read(fd,buffer,2);
+
+     if (read(fd,buffer,2) < 0){
+       LIB_CEC->AddLog(CEC_LOG_ERROR, "%s: Failed To Read From Tegra CEC Device", __func__);
+     }
+ 
      opcode = buffer[0];
      cec_command::Format(cmd, initiator, destination, cec_opcode(opcode));
       if ((buffer[1] & 0x01) > 0){
