@@ -245,21 +245,17 @@ void *TegraCECAdapterCommunication::Process(void)
       isNotEndOfData = 0;
     }
 
-    rc = read(fd,buffer,2);
-    opcode = buffer[0];
-
-    if (rc < 0){
-
-    }
-
     if (isNotEndOfData > 0){
+     rc = read(fd,buffer,2);
+     opcode = buffer[0];
      cec_command::Format(cmd, initiator, destination, cec_opcode(opcode));
+      if ((buffer[1] & 0x01) > 0){
+        isNotEndOfData = 0;
+      }
     } else {
      cec_command::Format(cmd, initiator, destination, CEC_OPCODE_NONE);
     }
 
-    
-    int8_t isAck = 0;
     while (isNotEndOfData > 0){
 
       if (read(fd,buffer,2) < 0){
@@ -267,10 +263,6 @@ void *TegraCECAdapterCommunication::Process(void)
       }
 
       cmd.parameters.PushBack(buffer[0]);
-
-      if ((buffer[1] & 0x02) > 0){
-        isAck = 1;
-      }
 
       if ((buffer[1] & 0x01) > 0){
         isNotEndOfData = 0;
