@@ -134,7 +134,6 @@ cec_adapter_message_state TegraCECAdapterCommunication::Write(
     //LIB_CEC->AddLog(CEC_LOG_TRAFFIC, "%s: Sending OpCode %08x", __func__,data.opcode);
     if (data.parameters.size < 1){
         writeTegraCEC(data.opcode, 0, 1, isBroadcast);
-        return ADAPTER_MESSAGE_STATE_SENT_NOT_ACKED;
     } else {
         writeTegraCEC(data.opcode, 0, 0, isBroadcast);
     }
