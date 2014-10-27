@@ -112,72 +112,49 @@ std::string TegraCECAdapterCommunication::GetError(void) const
 cec_adapter_message_state TegraCECAdapterCommunication::Write(
   const cec_command &data, bool &UNUSED(bRetry), uint8_t UNUSED(iLineTimeout), bool UNUSED(bIsReply))
 {
+
+  int size = 0;
+  unsigned char cmdData[TEGRA_CEC_FRAME_MAX_LENGTH];
   unsigned char addr = (data.initiator << 4) | (data.destination & 0x0f); 
 
-  int isBroadcast = 0;
-
-  if (data.destination == 0xf)
-    isBroadcast = 1;
 
   if (data.initiator == data.destination){
     return ADAPTER_MESSAGE_STATE_SENT_NOT_ACKED;
   }
 
-  if (!data.opcode_set){
-    writeTegraCEC(addr, 1, 1, isBroadcast);
-  } else {
-    writeTegraCEC(addr, 1, 0, isBroadcast);
-  }
-
+  cmdData[size] = addr;
+  size++;
 
   if (data.opcode_set){
-    //LIB_CEC->AddLog(CEC_LOG_TRAFFIC, "%s: Sending OpCode %08x", __func__,data.opcode);
-    if (data.parameters.size < 1){
-        writeTegraCEC(data.opcode, 0, 1, isBroadcast);
-    } else {
-        writeTegraCEC(data.opcode, 0, 0, isBroadcast);
-    }
+     cmdData[size] = data.opcode;
+     size++;
   }
 
   
 
   for (int i = 0; i < data.parameters.size; i++){
-    if (i < data.parameters.size - 1)
-      writeTegraCEC(data.parameters.data[i], 0, 0, isBroadcast);
-    else
-      writeTegraCEC(data.parameters.data[i], 0, 1, isBroadcast);
+    cmdData[size] = data.parameters.data[i];
+    size++;
+
+    if (size > TEGRA_CEC_FRAME_MAX_LENGTH){
+      return ADAPTER_MESSAGE_STATE_SENT_NOT_ACKED;
+    }
   }
 
-  if (isBroadcast)
-    return ADAPTER_MESSAGE_STATE_SENT_NOT_ACKED;
-  else
+  int status = write(fd,cmdData,size);
+
+  if (status < 0){
+
+    if(errno == ECONNRESET || errno == EHOSTUNREACH){
+      return ADAPTER_MESSAGE_STATE_SENT_NOT_ACKED;
+    } else {
+      return ADAPTER_MESSAGE_STATE_ERROR;
+    }
+
+  } else {
     return ADAPTER_MESSAGE_STATE_SENT_ACKED;
-}
-
-
-void TegraCECAdapterCommunication::writeTegraCEC(unsigned char func, int isStart, int isFinish, int isBroadcast){
-    uint32_t data = 0;
-
-    data = func;
-
-    if (isFinish > 0){
-        data = data | (0x1 << 8);
-    }
-
-    if (isStart > 0){
-        data = data | (0x1 << 16);
-    }
-
-    if (isBroadcast > 0){
-        data = data | (0x1 << 12);
-    }
-
-    //LIB_CEC->AddLog(CEC_LOG_ERROR, "%s: Write To Tegra CEC Device %i  :: %02x", __func__, data, func);
-
-    if(write(fd,&data, sizeof(data)) < 0)
-    {
-        LIB_CEC->AddLog(CEC_LOG_ERROR, "%s: Failed To Write To Tegra CEC Device", __func__);
-    }
+  }
+    
 }
 
 
