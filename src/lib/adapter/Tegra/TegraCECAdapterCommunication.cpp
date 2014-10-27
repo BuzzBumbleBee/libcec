@@ -119,6 +119,10 @@ cec_adapter_message_state TegraCECAdapterCommunication::Write(
   if (data.destination == 0xf)
     isBroadcast = 1;
 
+  if (data.initiator == data.destination){
+    return ADAPTER_MESSAGE_STATE_SENT_NOT_ACKED;
+  }
+
   if (data.opcode == 0x00){
     writeTegraCEC(addr, 1, 1, isBroadcast);
     return ADAPTER_MESSAGE_STATE_SENT_NOT_ACKED;
