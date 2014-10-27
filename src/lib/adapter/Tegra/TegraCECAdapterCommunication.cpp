@@ -123,15 +123,14 @@ cec_adapter_message_state TegraCECAdapterCommunication::Write(
     return ADAPTER_MESSAGE_STATE_SENT_NOT_ACKED;
   }
 
-  if (data.opcode == 0x00){
+  if (!data.opcode_set){
     writeTegraCEC(addr, 1, 1, isBroadcast);
-    return ADAPTER_MESSAGE_STATE_SENT_NOT_ACKED;
   } else {
     writeTegraCEC(addr, 1, 0, isBroadcast);
   }
 
 
-  if (data.opcode != 0x00){
+  if (data.opcode_set){
     //LIB_CEC->AddLog(CEC_LOG_TRAFFIC, "%s: Sending OpCode %08x", __func__,data.opcode);
     if (data.parameters.size < 1){
         writeTegraCEC(data.opcode, 0, 1, isBroadcast);
