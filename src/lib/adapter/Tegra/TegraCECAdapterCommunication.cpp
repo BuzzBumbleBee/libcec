@@ -135,7 +135,7 @@ cec_adapter_message_state TegraCECAdapterCommunication::Write(
     size++;
 
     if (size > TEGRA_CEC_FRAME_MAX_LENGTH){
-      LIB_CEC->AddLog(CEC_LOG_ERROR, "%s: Command Longer Than 16 Bytes", __func__);
+      LIB_CEC->AddLog(CEC_LOG_ERROR, "%s: Command Longer Than %i Bytes", __func__,TEGRA_CEC_FRAME_MAX_LENGTH);
       return ADAPTER_MESSAGE_STATE_ERROR;
     }
   }
