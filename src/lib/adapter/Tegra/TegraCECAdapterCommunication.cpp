@@ -130,13 +130,12 @@ cec_adapter_message_state TegraCECAdapterCommunication::Write(
      size++;
   }
 
-  
-
   for (int i = 0; i < data.parameters.size; i++){
     cmdData[size] = data.parameters.data[i];
     size++;
 
     if (size > TEGRA_CEC_FRAME_MAX_LENGTH){
+      LIB_CEC->AddLog(CEC_LOG_ERROR, "%s: Command Longer Than 16 Bytes", __func__);
       return ADAPTER_MESSAGE_STATE_ERROR;
     }
   }
@@ -146,12 +145,15 @@ cec_adapter_message_state TegraCECAdapterCommunication::Write(
   if (status < 0){
 
     if(errno == ECONNRESET || errno == EHOSTUNREACH){
+      LIB_CEC->AddLog(CEC_LOG_TRAFFIC, "%s: Write OK But Not ACKED (%s)", __func__, strerror(errno));
       return ADAPTER_MESSAGE_STATE_SENT_NOT_ACKED;
     } else {
+      LIB_CEC->AddLog(CEC_LOG_ERROR, "%s: Write Error (%s)", __func__, strerror(errno));
       return ADAPTER_MESSAGE_STATE_ERROR;
     }
 
   } else {
+    LIB_CEC->AddLog(CEC_LOG_TRAFFIC, "%s: Write OK And ACKED", __func__);
     return ADAPTER_MESSAGE_STATE_SENT_ACKED;
   }
     
@@ -235,7 +237,7 @@ void *TegraCECAdapterCommunication::Process(void)
     while (isNotEndOfData > 0){
 
       if (read(fd,buffer,2) < 0){
-        LIB_CEC->AddLog(CEC_LOG_TRAFFIC, "%s: Failed To Read From Tegra CEC Device", __func__);
+        LIB_CEC->AddLog(CEC_LOG_ERROR, "%s: Failed To Read From Tegra CEC Device", __func__);
       }
 
       cmd.parameters.PushBack(buffer[0]);
