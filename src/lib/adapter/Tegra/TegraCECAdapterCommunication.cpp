@@ -174,20 +174,6 @@ cec_vendor_id TegraCECAdapterCommunication::GetVendorId(void)
 
 cec_logical_addresses TegraCECAdapterCommunication::GetLogicalAddresses(void)
 {
-  CLockObject lock(m_mutex);
-
-  if (m_bLogicalAddressChanged || m_logicalAddresses.IsEmpty() )
-  {
-    m_logicalAddresses.Clear();
-      
-    for (int la = CECDEVICE_TV; la < CECDEVICE_BROADCAST; la++)
-    {
-      m_logicalAddresses.Set(cec_logical_address(la));  
-    }
-
-    m_bLogicalAddressChanged = false;
-  }
-
   return m_logicalAddresses;
 }
 
