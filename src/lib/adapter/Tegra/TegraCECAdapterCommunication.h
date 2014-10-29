@@ -101,6 +101,7 @@ namespace CEC
   private:
     bool IsInitialised(void) const { return m_dev != 0; };
     int fd;
+    int fdAddr;
     bool devOpen;
     std::string                 m_strError; /**< current error message */
 

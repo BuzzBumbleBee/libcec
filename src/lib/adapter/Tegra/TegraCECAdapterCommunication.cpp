@@ -85,19 +85,31 @@ bool TegraCECAdapterCommunication::Open(uint32_t iTimeoutMs, bool UNUSED(bSkipCh
 
   if (fd < 0){
     LIB_CEC->AddLog(CEC_LOG_ERROR, "%s: Failed To Open Tegra CEC Device", __func__);
-  } else {
-    if (!bStartListening || CreateThread())
+    return false;
+  } 
+
+
+  fdAddr = open(TEGRA_ADDR_PATH, O_RDWR);
+
+  if (fdAddr < 0){
+    LIB_CEC->AddLog(CEC_LOG_ERROR, "%s: Failed To Open Tegra Logical Address Node", __func__);
+    close(fd);
+    return false;
+  }   
+
+  if (!bStartListening || CreateThread()){
     devOpen = true;
     return true;
   }
 
-  return true;
+  return false;
 }
 
 
 void TegraCECAdapterCommunication::Close(void)
 {
   StopThread(0);
+  close(fdAddr);
   close(fd);
 }
 
@@ -180,12 +192,30 @@ cec_logical_addresses TegraCECAdapterCommunication::GetLogicalAddresses(void)
 
 bool TegraCECAdapterCommunication::SetLogicalAddresses(const cec_logical_addresses &addresses)
 {  
+  uint16_t mask = 0x0;
+
+  for (int i = CECDEVICE_TV; i < CECDEVICE_BROADCAST; i++)
+  {
+    if (addresses.IsSet(cec_logical_address(i))){
+      mask |= 0x1 << i;
+    }
+  }
+
+  if(write(fdAddr,&mask,sizeof(mask)) < 0){
+    LIB_CEC->AddLog(CEC_LOG_ERROR, "%s: Failed write to logical address node (%s) (%i)", __func__,strerror(errno),mask);
+    //return false;
+  }
+  
+
+  m_logicalAddresses = addresses;
+  m_bLogicalAddressChanged = true;  
   return true;
 }
 
 
 void TegraCECAdapterCommunication::HandleLogicalAddressLost(cec_logical_address UNUSED(oldAddress))
 {
+  //Tegra always listens on broadcast so no need to handle this
 }
 
 
@@ -214,17 +244,17 @@ void *TegraCECAdapterCommunication::Process(void)
 
     if (isNotEndOfData > 0){
 
-     if (read(fd,buffer,2) < 0){
-       LIB_CEC->AddLog(CEC_LOG_ERROR, "%s: Failed To Read From Tegra CEC Device", __func__);
-     }
+      if (read(fd,buffer,2) < 0){
+        LIB_CEC->AddLog(CEC_LOG_ERROR, "%s: Failed To Read From Tegra CEC Device", __func__);
+      }
  
-     opcode = buffer[0];
-     cec_command::Format(cmd, initiator, destination, cec_opcode(opcode));
+      opcode = buffer[0];
+      cec_command::Format(cmd, initiator, destination, cec_opcode(opcode));
       if ((buffer[1] & 0x01) > 0){
         isNotEndOfData = 0;
       }
     } else {
-     cec_command::Format(cmd, initiator, destination, CEC_OPCODE_NONE);
+      cec_command::Format(cmd, initiator, destination, CEC_OPCODE_NONE);
     }
 
     while (isNotEndOfData > 0){
